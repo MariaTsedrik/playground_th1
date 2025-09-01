@@ -42,7 +42,7 @@ scripts/
         │── hdf5/  
     │── inifiles/     
     │── scalecuts/  
-    │── utils/    
+│── utils/    
 ```
 
 #### c. Run a Single Likelihood Evaluation
