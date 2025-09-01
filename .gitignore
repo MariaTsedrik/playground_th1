@@ -1,1 +1,37 @@
 *.pyc
+
+
+.DS_Store
+node_modules/
+*.log
+
+# Python temp files
+__pycache__/
+*.py[cod]
+*$py.class
+scripts/utils/__pycache__/
+
+# data
+tutorials/th1-kp4/cov_Gauss_3x2pt_2D_probe_zpair_ell_2500deg2_ellmax5000_Bmode_copy.npy
+tutorials/th1-kp4/*.fits
+
+# Distribution / packaging
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+share/python-wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+

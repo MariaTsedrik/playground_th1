@@ -10,6 +10,106 @@ The data can be read using the [`euclidlib`](https://euclidlib.readthedocs.io/en
 
 Happy learning! 🎉
 
+## 🧪 Instruction for TH1-KP4 
+
+### 1️⃣ Download Data for Null-Tests
+To get started with linear and nonlinear beyond-ΛCDM modifications:
+- Ensure you are using the following branches:
+  - [`cloelib`](https://github.com/cloe-org/cloelib/tree/feature/beyond-lcdm-linear-perturbations): `feature/beyond-lcdm-linear-perturbations`
+  - [`MGEmus`](https://github.com/nebblu/MGEmus/tree/mu-sigma-q1): `mu-sigma-q1`
+- Navigate to `tutorials/th1-kp4/mgrowth.ipynb` and download the required data from Zenodo executing one of the first cells there:
+  - `nz_example.fits`: n(z) distributions for sources and lenses
+  - `cov_Gauss_3x2pt_2D_probe_zpair_ell_2500deg2_ellmax5000_Bmode_copy.npy`: Gaussian covariance
+  - `mixmat_identity_5000_binned.fits`: Mixing matrices
+  - `synth_cells_5000_binned.fits`: Noiseless synthetic data computed with HMcode2020
+
+### 2️⃣ Run Shear-Only Analysis
+#### a. Prepare the Environment
+- Copy `EuclidLikelihood_WL_Cls.py` from this directory to `cloelike/cloelike` alongside other `EuclidLikelihood_*.py` files.
+- Recompile `cloelike`:
+  ```bash
+  pip install .
+  ```
+
+#### b. Familiarize with the `scripts` Folder
+The `scripts` folder is structured as follows:
+```
+scripts/
+│── plotting/  
+    │── figs/   
+│── sampling/     
+    │── chains/
+        │── hdf5/  
+    │── inifiles/     
+    │── scalecuts/  
+    │── utils/    
+```
+
+#### c. Run a Single Likelihood Evaluation
+From `scripts/sampling`, execute a single likelihood evaluation for different scenarios (`LCDM_NL`, `MG_L`, `MG_NL`) by modifying the options in the Python script:
+```bash
+python test_onelike_evaluation.py
+```
+The output test files will include:
+- **Header**: Information on scale cuts, varied parameters, priors, etc.
+- **Footer**: Example output:
+  ```
+  First call (includes JIT compilation)
+  loglikelihood = -37.361222
+  evaluation took 2.2407 s (--> 0:00:02.240670 hh:mm:ss)
+  ##############################################################
+  Second call (JIT compiled)
+  loglikelihood = -37.361222
+  evaluation took 0.0349 s (--> 0:00:00.034887 hh:mm:ss)
+  ##############################################################
+  Third call (timing verification)
+  loglikelihood = -37.361222
+  evaluation took 0.0348 s (--> 0:00:00.034773 hh:mm:ss)
+  ```
+
+#### d. Use Nautilus for Sampling
+Run [`Nautilus`](https://nautilus-sampler.readthedocs.io/en/latest/guides/parallelization.html) using one of the options:
+- Shared-memory multiprocessing
+- MPI (recommended for clusters like Cuillin)
+
+Refer to `nautilus_example_update.py` and `nautilus_example_update_mpi.py` for detailed explanations.
+
+#### e. Quick Parameter Variation
+For a quick run, vary only 2 parameters while fixing others to their fiducial values. Modify the `inifiles\params_model_shear.yaml` accordingly, 
+the parameters in the inifiles are defined as follows:
+```yaml
+Omega_cdm0:
+    type: 'U'  # Uniform prior
+    p0: 0.27   # Fixed value
+    p1: 0.2    # Prior lower limit
+    p2: 0.5    # Prior upper limit 
+
+ombh2:
+    type: 'G'   # Gaussian prior
+    p0: 0.0227  # Fixed value
+    p1: 0.0227  # Mean of the prior
+    p2: 0.00038 # Std of the prior
+```
+To ignore baryons in HMCode, leave `p0` empty:
+```yaml
+log10TAGN: 
+    type: 'F'
+    p0: 
+    p1: 7.6
+    p2: 8.3  
+```
+
+#### f. Example Slurm File
+Check out the example Slurm file: `CLOE_test_mpi.sbatch`.
+
+### 3️⃣ Visualize Results
+#### a. Generate Plots
+- Navigate to `plotting` and adapt `plot_posterior_minimal.py` to your chains.
+- Run the script to generate plots.
+
+#### b. View Saved Figures
+- The plots will be saved in `plotting/figs`.
+
 ## 🔧 Features
 - Tutorials on how to run `cloelib`, `cloelike` and get around the cloe-org ecosystem
 
@@ -68,8 +168,6 @@ Thanks goes to these wonderful people ([emoji key](https://allcontributors.org/d
     </tr>
     <tr>
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/itutusaus"><img src="https://avatars.githubusercontent.com/u/20775836?v=4?s=100" width="100px;" alt="itutusaus"/><br /><sub><b>itutusaus</b></sub></a><br /><a href="#code-itutusaus" title="Code">💻</a> <a href="#review-itutusaus" title="Reviewed Pull Requests">👀</a></td>
-      <td align="center" valign="top" width="14.28%"><a href="https://github.com/ippoppi"><img src="https://avatars.githubusercontent.com/u/50492103?v=4?s=100" width="100px;" alt="Filippo Oppizzi"/><br /><sub><b>Filippo Oppizzi</b></sub></a><br /><a href="#code-ippoppi" title="Code">💻</a> <a href="#ideas-ippoppi" title="Ideas, Planning, & Feedback">🤔</a> <a href="#tool-ippoppi" title="Tools">🔧</a></td>
-      <td align="center" valign="top" width="14.28%"><a href="https://marcobonici.github.io/"><img src="https://avatars.githubusercontent.com/u/58727599?v=4?s=100" width="100px;" alt="Marco Bonici"/><br /><sub><b>Marco Bonici</b></sub></a><br /><a href="#code-marcobonici" title="Code">💻</a> <a href="#ideas-marcobonici" title="Ideas, Planning, & Feedback">🤔</a></td>
     </tr>
   </tbody>
 </table>

@@ -1,0 +1,290 @@
+################################################
+#               COSMOLOGY                      #
+################################################
+#omch2:
+#  type: 'F'
+#  p0: 0.121203
+#  p1: 0.11
+#  p2: 0.13
+
+Omega_cdm0:
+  type: 'U'
+  p0: 0.27
+  p1: 0.2
+  p2: 0.5  
+
+ombh2:
+  type: 'G'
+  p0: 0.0227
+  p1: 0.0227
+  p2: 0.00038
+
+H0:
+  type: 'U'
+  p0: 67.
+  p1: 58. #50.
+  p2: 80. #90.
+
+logAs:
+  type: 'U'
+  p0: 3.044522437723423
+  p1: 1.61 #1.6 #2.833213344056216
+  p2: 3.91 #3.999 #3.2188758248682006
+
+ns:
+  type: 'U'
+  p0: 0.96
+  p1: 0.93 #0.6
+  p2: 1. #1.2       
+
+mnu: 
+  type: 'F'
+  p0: 0.0
+  p1: 0.
+  p2: 0.5
+  
+Omega_k0:
+  type: 'F'
+  p0: 0
+  p1: -0.5
+  p2: 0.5
+################################################
+#               MG and DE                      #
+################################################
+gamma_MG:
+  type: 'F'
+  p0: 0.545
+  p1: 0.
+  p2: 1.
+
+w0: 
+  type: 'F'
+  p0: -1.
+  p1: -3.
+  p2: -0.3
+
+wa: 
+  type: 'F'
+  p0: 0.0   
+  p1: -3.
+  p2: 3.     
+
+mu0: 
+  type: 'U'
+  p0: 0.
+  p1: -0.99 #-0.95 #-2. #-0.8
+  p2: 2. #4. #3.
+
+sigma0: 
+  type: 'U'
+  p0: 0.
+  p1: -0.99 #-2.
+  p2: 2. #4.
+
+q1:
+  type: 'U'
+  p0: 0.
+  p1: -2.
+  p2: 2. 
+
+#log10Omega_rc: 
+#  type: 'F'
+#  p0: -0.6989700043360187 #Omega_rc = 0.2
+#  p1: -3.
+#  p2: 2.     
+
+#log10f_R0: 
+#  type: 'F'
+#  p0: -5
+#  p1: -7.
+#  p2: -4.     
+################################################
+#               Nuisances                      #
+################################################
+AIA:
+  type: 'U'
+  p0: 0.16 
+  p1: -5. #-1.
+  p2: 5. #1. 
+
+EtaIA:
+  type: 'U'
+  p0: 1.66 
+  p1: -5.
+  p2: 5. 
+
+b1_photo_poly0:  
+  type: 'U'
+  p0: 1.33291
+  p1: -2.
+  p2: 2.
+
+b1_photo_poly1:  
+  type: 'U'
+  p0: -0.72414
+  p1: -2.
+  p2: 2.
+
+b1_photo_poly2:  
+  type: 'U'
+  p0: 1.0183
+  p1: -2.
+  p2: 2.
+
+b1_photo_poly3:  
+  type: 'U'
+  p0: -0.14913
+  p1: -2.
+  p2: 2.  
+
+magnification_bias_1: 
+  type: 'U'
+  p0: 0.0
+  p1: -2.
+  p2: 2.
+
+magnification_bias_2: 
+  type: 'U'
+  p0: 0.0
+  p1: -2.
+  p2: 2.  
+
+magnification_bias_3: 
+  type: 'U'
+  p0: 0.0
+  p1: -2.
+  p2: 2.  
+
+magnification_bias_4: 
+  type: 'U'
+  p0: 0.0
+  p1: -2.
+  p2: 2.  
+
+magnification_bias_5: 
+  type: 'U'
+  p0: 0.0
+  p1: -2.
+  p2: 2.  
+
+magnification_bias_6: 
+  type: 'U'
+  p0: 0.0
+  p1: -2.
+  p2: 2.
+
+
+multiplicative_bias_1: 
+  type: 'G'
+  p0: 0.
+  p1: 0.
+  p2: 0.01
+
+multiplicative_bias_2: 
+  type: 'G'
+  p0: 0.
+  p1: 0.
+  p2: 0.01
+
+multiplicative_bias_3: 
+  type: 'G'
+  p0: 0.
+  p1: 0.
+  p2: 0.01  
+
+multiplicative_bias_4: 
+  type: 'G'
+  p0: 0.
+  p1: 0.
+  p2: 0.01  
+
+multiplicative_bias_5: 
+  type: 'G'
+  p0: 0.
+  p1: 0.
+  p2: 0.01
+
+multiplicative_bias_6: 
+  type: 'G'
+  p0: 0.
+  p1: 0.
+  p2: 0.01 
+
+
+dz_pos_1: 
+  type: 'G'
+  p0: 0.
+  p1: 0.
+  p2: 0.01  
+
+dz_pos_2: 
+  type: 'G'
+  p0: 0.
+  p1: 0.
+  p2: 0.01  
+
+dz_pos_3: 
+  type: 'G'
+  p0: 0.
+  p1: 0.
+  p2: 0.01  
+
+dz_pos_4: 
+  type: 'G'
+  p0: 0.
+  p1: 0.
+  p2: 0.01  
+
+dz_pos_5: 
+  type: 'G'
+  p0: 0.
+  p1: 0.
+  p2: 0.01  
+
+dz_pos_6: 
+  type: 'G'
+  p0: 0.
+  p1: 0.
+  p2: 0.01  
+
+dz_shear_1: 
+  type: 'G'
+  p0: 0.
+  p1: 0.
+  p2: 0.01  
+
+dz_shear_2: 
+  type: 'G'
+  p0: 0.
+  p1: 0.
+  p2: 0.01  
+
+dz_shear_3: 
+  type: 'G'
+  p0: 0.
+  p1: 0.
+  p2: 0.01  
+
+dz_shear_4: 
+  type: 'G'
+  p0: 0.
+  p1: 0.
+  p2: 0.01  
+
+dz_shear_5: 
+  type: 'G'
+  p0: 0.
+  p1: 0.
+  p2: 0.01  
+
+dz_shear_6: 
+  type: 'G'
+  p0: 0.
+  p1: 0.
+  p2: 0.01  
+
+log10TAGN: 
+  type: 'U'
+  p0: 7.75
+  p1: 7.6
+  p2: 8.3  
