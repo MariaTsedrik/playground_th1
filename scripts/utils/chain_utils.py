@@ -8,8 +8,8 @@ including header generation and chain formatting for cosmological parameter anal
 Functions:
     gen_output_header: Generate formatted headers for MCMC chain output files
 
-Author: [Your Name]  
-Date: [Date]
+Author: Maria Tsedrik
+Date: 26 Aug 2025
 """
 
 
