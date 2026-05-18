@@ -95,6 +95,7 @@ from cloelib.cosmology.camb_cosmology import CAMBBackground
 from cloelib.cosmology.HMcode2020Emu_cosmology import HMemuLinearPerturbations, HMemuNonLinearPerturbations
 from cloelib.cosmology.mgrowth_cosmology import MGrowthLinearPerturbations
 from cloelib.cosmology.reactemu_cosmology import MGemuNonlinearBoost, BoostedPerturbations
+from cloelib.cosmology.wz_cosmology import DEBackground, DELinearPerturbations, DENonlinearPerturbations
 
 # CLOE likelihood modules  
 from cloelike.EuclidLikelihood_WL_Cls import EuclidLikelihood_WL_Cls
@@ -216,7 +217,7 @@ def build_settings():
     dict
         Settings dictionary containing 'n_ell_bins' and 'scale_cuts'
     """
-    scales_file = 'scalecuts/scale_cuts_1500.yaml'  # Scale cuts for kmax = 0.3 h/Mpc
+    scales_file = 'scalecuts/scale_cuts_3000.yaml'  # Scale cuts for kmax = 0.3 h/Mpc
     
     # Load scale cuts configuration
     with open(scales_file, "r") as file_in:
@@ -278,49 +279,35 @@ def get_like_instance(type_name):
     ValueError
         If type_name is not one of the supported model types
     """
-    if type_name == 'LCDM_NL':
-        # Standard ΛCDM model with HMcode2020 emulator
-        like_instance = EuclidLikelihood_WL_Cls(
-            data=data_WL,
-            settings=settings_WL,
-            Background=CAMBBackground,
-            LinPerturbations=HMemuLinearPerturbations,
-            NonLinPerturbations=HMemuNonLinearPerturbations,
-        )
-        linpert_name = 'hmemu'
-        nonlinpert_name = 'hmemu'
-        
-    elif type_name == 'MG_L':
-        # Modified Gravity with linear perturbations only
-        like_instance = EuclidLikelihood_WL_Cls(
-            data=data_WL,
-            settings=settings_WL,
-            Background=CAMBBackground,
-            LinPerturbations=MGrowthLinearPerturbations,
-            LinPerturbationsBase=HMemuLinearPerturbations,
-            NonLinPerturbations=None,
-            gravity_model='musigma-de'
-        )
-        linpert_name = 'hmemu+mgrowth'
-        nonlinpert_name = 'none'
-        
-    elif type_name == 'MG_NL':   
+    zfinal = 1000.
+    zmax = 3.
+    zmin = 0.
+    zbin_edges = np.array([0., 0.4, 0.8, 1.2, 1.6, 2., zmax, zfinal])
+    zbin_centers = 0.5*(zbin_edges[1:] + zbin_edges[:-1])
+    zbin_widths = np.diff(zbin_edges)
+    
+    Nbin = len(zbin_centers)
+
+    print('z-bin edges: ', zbin_edges)
+    print('z-bin centers: ', zbin_centers)
+    print('z-bin widths: ', zbin_widths)
+
+    if type_name == 'de_bin':
         # Modified Gravity with nonlinear boost corrections
         like_instance = EuclidLikelihood_WL_Cls(
             data=data_WL,
             settings=settings_WL,
-            Background=CAMBBackground,
-            LinPerturbations=MGrowthLinearPerturbations, 
+            Background=DEBackground,
+            BackgroundLCDM=CAMBBackground,
+            LinPerturbations=DELinearPerturbations, 
             LinPerturbationsBase=HMemuLinearPerturbations,
-            NonLinPerturbations=BoostedPerturbations,
-            gravity_model='musigma-de'
+            NonLinPerturbations=DENonlinearPerturbations
         ) 
         linpert_name = 'hmemu+mgrowth'
-        nonlinpert_name = 'hmemu+mgemu'
+        nonlinpert_name = 'pseudo-hmemu'
         
     else:
-        raise ValueError(f"type_name '{type_name}' not allowed. "
-                        f"Must be one of: 'LCDM_NL', 'MG_L', 'MG_NL'")
+        raise ValueError(f"type_name '{type_name}' not allowed. ")
     
     # Build header dictionary for chain output
     header_dic = {
@@ -331,7 +318,7 @@ def get_like_instance(type_name):
         'nz': nz_file,
         'lbin': settings_WL['n_ell_bins'],
         'scale_cuts': settings_WL['scale_cuts'],
-        'background': 'camb',
+        'background': 'de',
         'linpert': linpert_name,
         'nonlinpert': nonlinpert_name,
     }
@@ -339,10 +326,10 @@ def get_like_instance(type_name):
     return like_instance, header_dic
 # ⚠️  IMPORTANT: Verify scale cuts file matches your analysis requirements
 # Current file: scale_cuts_0p3.yaml (for kmax = 0.3 h/Mpc)
-hdf5_name = chain_name = 'musigma_shear_lmax1500_parallel_emupriors_mgemu_q1_bar_correctedSigma'
-type_name = 'MG_NL' #'LCDM_NL', 'MG_L' or 'MG_NL
+hdf5_name = chain_name = 'debinned_shear_lmax3000_nonparallel_fixcosmo'
+type_name = 'de_bin' #'LCDM_NL', 'MG_L' or 'MG_NL
 like_instance, header_dic = get_like_instance(type_name)
-config_file = 'inifiles/params_model_shear.yaml'
+config_file = 'inifiles/params_model_shear_de.yaml'
 ###################
 with open(config_file, "r") as file_in:
     params_dic = yaml.safe_load(file_in)
@@ -437,27 +424,9 @@ print(f'  Log-likelihood: {like_Naut_test(dic_test):.6f}')
 # This can lead to deadlocks. Consider using MPI for production runs.
 # 
 # For development/testing, the current setup works but monitor for issues.
-sampling_workers = 4
+
+sampling_workers = 1
 def main():    
-    """
-    Main sampling execution function.
-    
-    Sets up and runs the Nautilus nested sampler with the specified
-    configuration, then saves results in both HDF5 and text formats.
-    
-    Sampling Configuration:
-    - 3000 live points for robust exploration
-    - Target effective sample size: 5000
-    - Parallel sampling evaluation with 4 workers
-    - Discards exploration phase for clean posterior
-    
-    Outputs:
-    - HDF5 file: chains/hdf5/{hdf5_name}.hdf5
-    - Text chain: chains/chain_{chain_name}.txt
-    - Evidence: log_Z value
-    - Timing information in chain footer
-    """
-    
     # Initialize Nautilus sampler
     sampler = Sampler(
         prior, 
@@ -498,21 +467,11 @@ def main():
     print(f"    Chain: chains/chain_{chain_name}.txt")
 
 
-# =============================================================================
-# MAIN EXECUTION
-# =============================================================================
 
 if __name__ == "__main__":
-    """
-    Main execution block with proper cleanup.
-    
-    Runs the sampling analysis and ensures all multiprocessing
-    pools are properly closed to prevent resource leaks.
-    """
     try:
         main()
     finally:
         # Ensure all multiprocessing pools are properly closed
         # This prevents resource leaks and hanging processes
         multiprocessing.active_children()
-

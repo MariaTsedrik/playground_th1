@@ -2,6 +2,7 @@
 #               COSMOLOGY                      #
 ################################################
 Omega_m: '\Omega_{\rm m}'
+Omega_m0: '\Omega_{\rm m}'
 Omega_cdm0: '\Omega_{\rm cdm}'
 Omega_b0: '\Omega_{\rm b}'
 ombh2: '\omega_{\rm b}'
@@ -13,11 +14,15 @@ logAs: '\log{10^{10}A_{\rm s}}'
 As: 'A_{\rm s}'
 sigma8_cb: '\sigma_8'
 sigma8: '\sigma_8'
+sigma8_0: '\sigma_8'
 ns: 'n_{\rm s}'
 mnu: 'M_\nu'
 w0: 'w_0'
-wa: 'w_a'    
-
+wa: 'w_a'
+wpiv: 'w_\bar{a}'
+xi: '\xi'
+Ads: 'A_{\rm ds}'
+Ads_piv: 'A_{\bar{a}, \rm ds}' #'A_{\rm ds, piv}'
 mu0: '\mu_0'
 sigma0: '\Sigma_0'
 q1: 'q_1'
@@ -25,6 +30,22 @@ S8: 'S_8'
 
 c1: 'c_1'
 lambda: '\lambda'
+
+w1: 'w_1'
+w2: 'w_2'
+w3: 'w_3'
+w4: 'w_4'
+w5: 'w_5'
+w6: 'w_6'
+
+
+wbin_1: 'w_1'
+wbin_2: 'w_2'
+wbin_3: 'w_3'
+wbin_4: 'w_4'
+wbin_5: 'w_5'
+wbin_6: 'w_6'
+wbin_7: 'w_7'
 ################################################
 #               Nuisances                      #
 ################################################

@@ -1,0 +1,17 @@
+model: tabulated
+Hz_file: /g100/home/userexternal/mbaldi00/SOURCE/DAKAR2/DST_m09_m01_Hz.dat
+zDf_file: /g100_scratch/userexternal/mbaldi00/DAKAR2/DST_m09_m01_CoDECS2/linear_growth.txt
+H0: 67.66
+Om: 0.311049
+Ob: 0.04897468161869667
+sigma8: 0.7426180218976315
+ns: 0.9665
+Tcmb: 0.0
+Neff: 3.046
+m_nu:
+ - 0
+Fid_model: w0waCDM
+Fid_H0: 67.6591
+Fid_Om: 0.311452
+Fid_w0: -0.9001
+Fid_wa: -0.1024

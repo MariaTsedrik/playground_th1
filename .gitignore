@@ -1,5 +1,19 @@
 *.pyc
 
+RR2.fits
+*RR2
+*npz
+
+tutorials/footprint.fits.gz
+tutorials/rr2_measure.ipynb
+tutorials/th1-kp4/TR1_data/
+tutorials/th1-kp4/GC_TR1_2ndit/
+tutorials/th1-kp4/leonardo/
+figs
+tutorials/th1-kp4/de_notebook.ipynb
+tutorials/th1-kp4/binned_w_smooth_notebook.ipynb
+tutorials/th1-kp4/spectroscopic_likelihoods_DR1_like_synth.ipynb
+scripts/sampling/chains/
 
 .DS_Store
 node_modules/
@@ -10,6 +24,9 @@ __pycache__/
 *.py[cod]
 *$py.class
 scripts/utils/__pycache__/
+
+# Jupyter checkpoints
+.ipynb_checkpoints/
 
 # data
 tutorials/th1-kp4/cov_Gauss_3x2pt_2D_probe_zpair_ell_2500deg2_ellmax5000_Bmode_copy.npy

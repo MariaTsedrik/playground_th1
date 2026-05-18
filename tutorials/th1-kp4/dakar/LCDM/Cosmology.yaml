@@ -1,0 +1,17 @@
+model: tabulated
+Hz_file: /g100/home/userexternal/mbaldi00/SOURCE/CoDECS2/LCDM_CoDECS2_recalibrated/Hz.dat
+zDf_file: /g100_scratch/userexternal/mbaldi00/DAKAR2/LCDM/linear_growth.txt
+H0: 67.66
+Om: 0.311049
+Ob: 0.04897468161869667
+sigma8: 0.7882104124
+ns: 0.9665
+Tcmb: 0.0
+Neff: 3.046
+m_nu:
+ - 0
+Fid_model: w0waCDM
+Fid_H0: 67.6591
+Fid_Om: 0.311367
+Fid_w0: -1.0001
+Fid_wa: -0.0025
