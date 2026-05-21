@@ -14,6 +14,7 @@ tutorials/th1-kp4/de_notebook.ipynb
 tutorials/th1-kp4/binned_w_smooth_notebook.ipynb
 tutorials/th1-kp4/spectroscopic_likelihoods_DR1_like_synth.ipynb
 scripts/sampling/chains/
+tutorials/th1-kp4/spectro_notebook_tcm.ipynb
 
 .DS_Store
 node_modules/
