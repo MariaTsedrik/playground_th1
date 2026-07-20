@@ -75,8 +75,8 @@ data['fiducial_cosmology']['H0'] = 67.0
 data['fiducial_cosmology']['Omega_cdm0'] = 0.27
 data['fiducial_cosmology']['Omega_b0'] = 0.049
 data['fiducial_cosmology']['Omega_k0'] = 0
-data['fiducial_cosmology']['mnu'] = 0.0
-data['fiducial_cosmology']['N_mnu'] = 0
+data['fiducial_cosmology']['mnu'] = 0.00001
+data['fiducial_cosmology']['N_mnu'] = 1
 data['fiducial_cosmology']['w0'] = -1
 data['fiducial_cosmology']['wa'] = 0.0
 data['fiducial_cosmology']['ns'] = 0.96
@@ -203,7 +203,7 @@ background = CAMBBackground(
 
 linear_perturbations_emu = HMemuLinearPerturbations(background, np.array(np.float64(labels)))
 
-f_fid = linear_perturbations_emu.growth_rate()
+f_fid = linear_perturbations_emu.growth_rate()[1:]
 
 ## Conversion of parameters
 def conv_comet_to_pbj(pars_dict_comet,f_fid_arr):
@@ -239,18 +239,46 @@ print(f"Log-likelihood: {loglike_val}")
 print(f"-2 * log-likelihood: {-2 * loglike_val}")
 print(f"⏱️ Time elapsed: {end - start:.3f} seconds")
 
-# AM priors for COMET (not used now)
-AM_priors = {
-    z: {'bGam3': [0.0, 50.0], 'c0': [0.0, 200.0], 'c2': [0.0, 200.0], 'c4': [0.0, 200.0], 'cnlo': [0.0, 4000.0], 'NP0':[1,2], 'NP20': [0.0, 30.0], 'NP22': [0.0, 30.0]} for z in labels}
 # Approximate conversion to PBJ
+#reparam_factor = 0.5408711112371846
+#reparam_factor = 1.0
+#c024_comet = c024_pbj * fid_h**2
+AM_priors_comet = {
+    key: {'bGam3': [0.0, 5.0],
+          'c0': [0.0, 100.0],
+          'c2': [0.0, 100.0],
+          'c4': [0.0, 100.0],
+          'cnlo': [0.0, 4000.0],
+          'NP0': [1.0, 2.0],
+          'NP20': [0.0, 30.0],
+          'NP22': [0.0, 30.0]}
+    for key in labels
+}
 AM_priors_pbj = {
-    z: {'bG3': [0.0, 5.0], 'c0': [0.0, 100.0], 'c2': [0.0, 200.0], 'c4': [0.0, 750.0], 'ck4': [0.0, 2000.0], 'NP0':[1,2], 'NP20': [0.0, 30.0], 'NP22': [0.0, 30.0]} for z in labels}
-    #z: {'bG3': [0.0, 50.0], 'c0': [0.0, 200.0], 'c2': [0.0, 300.0], 'c4': [0.0, 1500.0], 'ck4': [0.0, 2000.0], 'NP0':[1,2], 'NP20': [0.0, 30.0], 'NP22': [0.0, 30.0]} for z in labels}
-    #z: {'bG3': [0.0, 10.0], 'c0': [0.0, 100.0], 'c2': [30.0, 300.0], 'c4': [0.0, 300.0], 'ck4': [0.0, 1500.0], 'NP0':[1,2], 'NP20': [0.0, 10.0], 'NP22': [0.0, 10.0]} for z in labels}
+    z: {'bG3': [0.0, 5.0], 
+    'c0': [0.0, 87.5], 
+    'c2': [0.0, 257.5676469], 
+    'c4': [0.0, 573.31808531], 
+    'ck4': [0.0, 3640.69234774], 
+    'NP0':[1,2], 
+    'NP20': [0.0, 30.0], 
+    'NP22': [0.0, 30.0]} 
+    for z in labels
+    }
+   
+   #z: {'bG3': [0.0, 5.0], 'c0': [0.0, 100.0], 'c2': [0.0, 200.0], 'c4': [0.0, 750.0], 'ck4': [0.0, 2000.0], 'NP0':[1,2], 'NP20': [0.0, 30.0], 'NP22': [0.0, 30.0]} for z in labels}
+    #rescale for D2sigma8-reparam and taking h-conversion into account
+    #"new priors"
+    #z: {'bG3': [0.0, 5.0*reparam_factor], 'c0': [0.0, 100.0*reparam_factor* fid_h**2], 'c2': [0.0, 200.0*reparam_factor* fid_h**2], 'c4': [0.0, 750.0*reparam_factor* fid_h**2], 'ck4': [0.0, 2000.0*reparam_factor* fid_h**4], 'NP0':[1,2], 'NP20': [0.0, 30.0* fid_h**2], 'NP22': [0.0, 30.0* fid_h**2]} for z in labels}
+    #new priors v2 with reparam_factor = 1.0
+    #new priors v3 with reparam_factor = 0.54
+    #z: {'bG3': [0.0, 5.0*reparam_factor**2], 'c0': [0.0, 100.0*reparam_factor* fid_h**2], 'c2': [0.0, 200.0*reparam_factor* fid_h**2], 'c4': [0.0, 750.0*reparam_factor* fid_h**2], 'ck4': [0.0, 2000.0*reparam_factor* fid_h**-4], 'NP0':[1,2], 'NP20': [0.0, 30.0* fid_h**-2], 'NP22': [0.0, 30.0* fid_h**-2]} for z in labels}
+    #z: {'bG3': [0.0, 5.0*reparam_factor**2], 'c0': [0.0, 100.0*reparam_factor* fid_h**-2], 'c2': [0.0, 200.0*reparam_factor* fid_h**-2], 'c4': [0.0, 750.0*reparam_factor* fid_h**-2], 'ck4': [0.0, 2000.0*reparam_factor* fid_h**-4], 'NP0':[1,2], 'NP20': [0.0, 30.0* fid_h**-2], 'NP22': [0.0, 30.0* fid_h**-2]} for z in labels}
+
 like_AM_pbj = EuclidLikelihood_GCspectro_Pls(data=data, settings=settings, Background=CAMBBackground, SpectroPower=PBJSpectroPower, Perturbations=HMemuLinearPerturbations, AM_priors=AM_priors_pbj)
-
-print (-2*like_AM_pbj.loglike_AM(parameters_pbj, use_Jeffreys=True))
-
+#print("new re-scaled priors: ", AM_priors_pbj)
+#print (-2*like_AM_pbj.loglike_AM(parameters_pbj, use_Jeffreys=True))
+print (-2*like_AM_pbj.loglike_AM(parameters_pbj, use_Jeffreys=False, do_reparam=True))
 # ============================================================================
 # 4. DEFINE PRIOR DISTRIBUTION FOR NAUTILUS
 # ============================================================================
@@ -350,6 +378,7 @@ def like_Nautilus(param_dict):
     # Evaluate likelihood with cloelike
     try:
         log_likelihood = like_AM_pbj.loglike_AM(pars, use_Jeffreys=False, do_reparam=True)
+        #log_likelihood = like_AM_pbj.loglike_AM(pars, use_Jeffreys=True, do_reparam=False)
     except (ValueError, RuntimeError):
         # If evaluation fails (e.g., unphysical parameters), return -inf
         log_likelihood = -np.inf
@@ -369,6 +398,7 @@ def like_Nautilus(param_dict):
 # Check https://nautilus-sampler.readthedocs.io/en/latest/guides/parallelization.html
 #
 # ====================================================================================
+
 def main():   
     print("=" * 60)
     print("Running Nautilus sampler...")
@@ -379,8 +409,9 @@ def main():
         prior,
         like_Nautilus,
         n_live=2000,                           # Number of live points
-        filepath='chains/hdf5/checkpoint_spec_pbj_DR1_like_tcm_andreapedro_priors_cpl_AapD2As.hdf5',
-        pool=14       # Checkpoint file
+        filepath='chains/hdf5/checkpoint_spec_pbj_DR1_like_tcm_andreapedro_priors_AapD2sigma8_normfid_exactcometpriors_correctedgrowth.hdf5',
+        pool=12,       # Checkpoint file
+        resume=False
     )
 
     # Run the sampler
@@ -401,7 +432,7 @@ def main():
 
     # Save to compressed file
     np.savez_compressed(
-        "chains/chain_spec_pbj_DR1_like_tcm_andreapedro_priors_cpl_AapD2As.npz",
+        "chains/chain_spec_pbj_DR1_like_tcm_andreapedro_priors_AapD2sigma8_normfid_exactcometpriors_correctedgrowth.npz",
         chain=points,           # Posterior samples
         weights=log_w,          # Log-weights
         logl=log_l              # Log-likelihood values
@@ -415,3 +446,4 @@ if __name__ == "__main__":
     finally:
         # Ensure all pools are properly closed
         multiprocessing.active_children()
+

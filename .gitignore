@@ -15,6 +15,7 @@ tutorials/th1-kp4/binned_w_smooth_notebook.ipynb
 tutorials/th1-kp4/spectroscopic_likelihoods_DR1_like_synth.ipynb
 scripts/sampling/chains/
 tutorials/th1-kp4/spectro_notebook_tcm.ipynb
+tutorials/th1-kp4/spectro_notebook_small_h.ipynb
 
 .DS_Store
 node_modules/
@@ -32,6 +33,7 @@ scripts/utils/__pycache__/
 # data
 tutorials/th1-kp4/cov_Gauss_3x2pt_2D_probe_zpair_ell_2500deg2_ellmax5000_Bmode_copy.npy
 tutorials/th1-kp4/*.fits
+tutorials/th1-kp4/GC_TR1_2ndit.zip
 
 # Distribution / packaging
 .Python
