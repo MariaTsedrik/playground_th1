@@ -5,6 +5,133 @@ from cloelike.EuclidLikelihood_photo_base import PhotoLikelihoodBase
 from cloelib.cosmology.camb_cosmology import CAMBBackground
 from cloelib.cosmology.HMcode2020Emu_cosmology import HMemuLinearPerturbations, HMemuNonLinearPerturbations
 
+
+def _freeze_value(value):
+    """Return a form of ``value`` that compares equal with ``==``.
+
+    Numpy arrays do not, so they are stored as raw bytes. Lists and dicts
+    are walked so redshift edges and ``w_i`` participate in the cache key.
+    """
+    if isinstance(value, np.ndarray):
+        return (value.shape, str(value.dtype), value.tobytes())
+    if isinstance(value, (list, tuple)):
+        return tuple(_freeze_value(item) for item in value)
+    if isinstance(value, dict):
+        return tuple(
+            sorted((str(key), _freeze_value(item)) for key, item in value.items())
+        )
+    return value
+
+
+# Probe nuisance parameters. Everything else in ``parameters`` can change the
+# background or the nonlinear spectrum, so it belongs in the cache key.
+_NUISANCE_KEYS = frozenset({"AIA", "EtaIA", "CIA"})
+_NUISANCE_PREFIXES = (
+    "multiplicative_bias_",
+    "dz_shear_",
+    "width_shear_",
+    "magnification_bias_",
+    "dz_pos_",
+    "width_pos_",
+    #"b1_photo_poly",
+    "b1_photo_bin",
+)
+
+
+def _is_nuisance_key(key):
+    return key in _NUISANCE_KEYS or key.startswith(_NUISANCE_PREFIXES)
+
+
+class _SharedDEPerturbations:
+    """Build the binned-w background and perturbations once per cosmology.
+
+    WL, GCph and GGL each implement ``get_theory_vector_full``, and a combined
+    likelihood runs every mixin in the method-resolution order. Without a
+    shared cache, 2x2pt builds the cosmology twice and 3x2pt builds it three
+    times. WL-only still builds it once. The same cache also keeps the
+    position and shear tracers, which GGL otherwise rebuilds on top of GCph
+    and WL.
+    """
+
+    def _cosmo_key(self, parameters):
+        return tuple(
+            (key, _freeze_value(parameters[key]))
+            for key in sorted(parameters)
+            if not _is_nuisance_key(key)
+        )
+
+    def _get_perturbations(self, parameters):
+        key = self._cosmo_key(parameters)
+        cached = getattr(self, "_perturbations_cache", None)
+        if cached is not None and cached[0] == key:
+            return cached[1]
+
+        background = self.Background(
+            parameters,
+            w_i=parameters["w_i"],
+            zbin_edges=parameters["zbin_edges"],
+        )
+        background_lcdm = CAMBBackground(
+            H0=background.H0,
+            Omega_cdm0=parameters["Omega_cdm0"],
+            Omega_b0=parameters["Omega_b0"],
+            Omega_k0=parameters["Omega_k0"],
+            w0=-1.0,
+            wa=0.0,
+            ns=parameters["ns"],
+            As=parameters["As"],
+            mnu=parameters["mnu"],
+            gamma_MG=parameters["gamma_MG"],
+            N_mnu=parameters["N_mnu"],
+        )
+        linear_perturbations_lcdm = HMemuLinearPerturbations(background_lcdm, self.zs)
+        lp = self.LinPerturbations(background, linear_perturbations_lcdm)
+        nlp = self.NonLinPerturbations(
+            background, lp, self.zs, log10TAGN=parameters["log10TAGN"]
+        )
+        # Computed once per cosmology. Calling it again from each mixin would
+        # repeat the same integral on the shared perturbations object.
+        self.derived["sigma8_0"] = nlp.sigma8_0()
+        result = (background, lp, nlp)
+        self._perturbations_cache = (key, result)
+        return result
+
+    def _get_pos_tracer(self, parameters, nlp):
+        key = self._cosmo_key(parameters) + tuple(
+            _freeze_value(parameters[name]) for name in self.full_pos_keys
+        )
+        cached = getattr(self, "_pos_tracer_cache", None)
+        if cached is not None and cached[0] == key:
+            return cached[1]
+        tracer = PositionsTracer(
+            nlp,
+            self.data["dndz_pos"],
+            self.zs,
+            nuisance_params={name: parameters[name] for name in self.full_pos_keys},
+            #galaxy_bias_model="poly",
+            galaxy_bias_model="per_bin",
+        )
+        self._pos_tracer_cache = (key, tracer)
+        return tracer
+
+    def _get_she_tracer(self, parameters, nlp):
+        key = self._cosmo_key(parameters) + tuple(
+            _freeze_value(parameters[name]) for name in self.full_she_keys
+        )
+        cached = getattr(self, "_she_tracer_cache", None)
+        if cached is not None and cached[0] == key:
+            return cached[1]
+        tracer = ShearTracer(
+            nlp,
+            self.data["dndz_she"],
+            self.zs,
+            ia_model="NLA",
+            nuisance_params={name: parameters[name] for name in self.full_she_keys},
+        )
+        self._she_tracer_cache = (key, tracer)
+        return tracer
+
+
 class WLMixin:
     """
     Mixin class providing weak lensing (WL) specific functionality for photometric likelihoods.
@@ -51,42 +178,14 @@ class WLMixin:
 
     def get_theory_vector_full(self, parameters):
         v = super().get_theory_vector_full(parameters)
-        background = self.Background(parameters,
-                            w_i = parameters["w_i"],
-                            zbin_edges = parameters["zbin_edges"]
-        )
-        background_lcdm = CAMBBackground(
-            H0=background.H0,
-            Omega_cdm0=parameters["Omega_cdm0"],
-            Omega_b0=parameters["Omega_b0"],
-            Omega_k0=parameters["Omega_k0"],
-            w0=-1.,
-            wa=0.,
-            ns=parameters["ns"],
-            As=parameters["As"],
-            mnu=parameters["mnu"],
-            gamma_MG=parameters["gamma_MG"],
-            N_mnu=parameters["N_mnu"],
-        )
-        linear_perturbations_lcdm = HMemuLinearPerturbations(background_lcdm, self.zs)
-        lp = self.LinPerturbations(background, linear_perturbations_lcdm)
-        nlp = self.NonLinPerturbations(
-            background, lp, self.zs, log10TAGN=parameters["log10TAGN"]
-        )
-        she = ShearTracer(
-            nlp,
-            self.data["dndz_she"],
-            self.zs,
-            ia_model='NLA',
-            nuisance_params={key: parameters[key] for key in self.full_she_keys},
-        )
+        _, _, nlp = self._get_perturbations(parameters)
+        she = self._get_she_tracer(parameters, nlp)
         if self.mode == "coupled":
             cell_all_th = AngularTwoPoint(she, she).get_pseudo_Cl(0, nlp.k, self.mixmat)
             vec = np.array([cell_all_th[key][0, 0] for key in self.WL_keys]).flatten()
         else:
             cell_all_th = AngularTwoPoint(she, she).get_Cl(self.data["ells"], 0, nlp.k)
             vec = np.array([cell_all_th[key][0, 0] for key in self.WL_keys]).flatten()
-        self.derived["sigma8_0"] = nlp.sigma8_0()
         self.theory_prediction = cell_all_th
         return np.concatenate([v, vec])
 
@@ -105,7 +204,8 @@ class GCphMixin:
 
     def _init_gcph(self):
         self.n_pos_bins = self.data["dndz_pos"].shape[0]
-        bias_keys = [f"b1_photo_poly{i}" for i in range(4)]
+        #bias_keys = [f"b1_photo_poly{i}" for i in range(4)]
+        bias_keys = [f"b1_photo_bin{i}" for i in range(0, self.n_pos_bins)]
         mag_bias_keys = [
             f"magnification_bias_{i}" for i in range(1, self.n_pos_bins + 1)
         ]
@@ -135,42 +235,14 @@ class GCphMixin:
 
     def get_theory_vector_full(self, parameters):
         v = super().get_theory_vector_full(parameters)
-        background = self.Background(parameters,
-                            w_i = parameters["w_i"],
-                            zbin_edges = parameters["zbin_edges"]
-        )
-        background_lcdm = CAMBBackground(
-            H0=background.H0,
-            Omega_cdm0=parameters["Omega_cdm0"],
-            Omega_b0=parameters["Omega_b0"],
-            Omega_k0=parameters["Omega_k0"],
-            w0=-1.,
-            wa=0.,
-            ns=parameters["ns"],
-            As=parameters["As"],
-            mnu=parameters["mnu"],
-            gamma_MG=parameters["gamma_MG"],
-            N_mnu=parameters["N_mnu"],
-        )
-        linear_perturbations_lcdm = HMemuLinearPerturbations(background_lcdm, self.zs)
-        lp = self.LinPerturbations(background, linear_perturbations_lcdm)
-        nlp = self.NonLinPerturbations(
-            background, lp, self.zs, log10TAGN=parameters["log10TAGN"]
-        )
-        pos = PositionsTracer(
-            nlp,
-            self.data["dndz_pos"],
-            self.zs,
-            nuisance_params={key: parameters[key] for key in self.full_pos_keys},
-            galaxy_bias_model="poly",
-        )
+        _, _, nlp = self._get_perturbations(parameters)
+        pos = self._get_pos_tracer(parameters, nlp)
         if self.mode == "coupled":
             cell_all_th = AngularTwoPoint(pos, pos).get_pseudo_Cl(0, nlp.k, self.mixmat)
             vec = np.array([cell_all_th[key] for key in self.GG_keys]).flatten()
         else:
             cell_all_th = AngularTwoPoint(pos, pos).get_Cl(self.data["ells"], 0, nlp.k)
             vec = np.array([cell_all_th[key] for key in self.GG_keys]).flatten()
-        self.derived["sigma8_0"] = nlp.sigma8_0()
         self.theory_prediction = cell_all_th
         return np.concatenate([v, vec])
 
@@ -190,7 +262,8 @@ class GGLMixin:
     def _init_ggl(self):
         self.n_pos_bins = self.data["dndz_pos"].shape[0]
         self.n_she_bins = self.data["dndz_she"].shape[0]
-        bias_keys = [f"b1_photo_poly{i}" for i in range(4)]
+        #bias_keys = [f"b1_photo_poly{i}" for i in range(4)]
+        bias_keys = [f"b1_photo_bin{i}" for i in range(0, self.n_pos_bins)]
         mag_bias_keys = [
             f"magnification_bias_{i}" for i in range(1, self.n_pos_bins + 1)
         ]
@@ -227,54 +300,20 @@ class GGLMixin:
 
     def get_theory_vector_full(self, parameters):
         v = super().get_theory_vector_full(parameters)
-        background = self.Background(parameters,
-                            w_i = parameters["w_i"],
-                            zbin_edges = parameters["zbin_edges"]
-        )
-        background_lcdm = CAMBBackground(
-            H0=background.H0,
-            Omega_cdm0=parameters["Omega_cdm0"],
-            Omega_b0=parameters["Omega_b0"],
-            Omega_k0=parameters["Omega_k0"],
-            w0=-1.,
-            wa=0.,
-            ns=parameters["ns"],
-            As=parameters["As"],
-            mnu=parameters["mnu"],
-            gamma_MG=parameters["gamma_MG"],
-            N_mnu=parameters["N_mnu"],
-        )
-        linear_perturbations_lcdm = HMemuLinearPerturbations(background_lcdm, self.zs)
-        lp = self.LinPerturbations(background, linear_perturbations_lcdm)
-        nlp = self.NonLinPerturbations(
-            background, lp, self.zs, log10TAGN=parameters["log10TAGN"]
-        ) 
-        pos = PositionsTracer(
-            nlp,
-            self.data["dndz_pos"],
-            self.zs,
-            nuisance_params={key: parameters[key] for key in self.full_pos_keys},
-            galaxy_bias_model="poly",
-        )
-        she = ShearTracer(
-            nlp,
-            self.data["dndz_she"],
-            self.zs,
-            ia_model='NLA',
-            nuisance_params={key: parameters[key] for key in self.full_she_keys},
-        )
+        _, _, nlp = self._get_perturbations(parameters)
+        pos = self._get_pos_tracer(parameters, nlp)
+        she = self._get_she_tracer(parameters, nlp)
         if self.mode == "coupled":
             cell_all_th = AngularTwoPoint(pos, she).get_pseudo_Cl(0, nlp.k, self.mixmat)
             vec = np.array([cell_all_th[key][0] for key in self.GGL_keys]).flatten()
         else:
             cell_all_th = AngularTwoPoint(pos, she).get_Cl(self.data["ells"], 0, nlp.k)
             vec = np.array([cell_all_th[key][0] for key in self.GGL_keys]).flatten()
-        self.derived["sigma8_0"] = nlp.sigma8_0()
         self.theory_prediction = cell_all_th
         return np.concatenate([v, vec])
 
 
-class EuclidLikelihood_WL(WLMixin, PhotoLikelihoodBase):
+class EuclidLikelihood_WL(WLMixin, _SharedDEPerturbations, PhotoLikelihoodBase):
     """
     EuclidLikelihood_WL computes the weak lensing (WL) likelihood for photometric surveys using Euclid data.
 
@@ -301,7 +340,7 @@ class EuclidLikelihood_WL(WLMixin, PhotoLikelihoodBase):
     pass
 
 
-class EuclidLikelihood_GCph(GCphMixin, PhotoLikelihoodBase):
+class EuclidLikelihood_GCph(GCphMixin, _SharedDEPerturbations, PhotoLikelihoodBase):
     """
     EuclidLikelihood_GCph computes the likelihood for galaxy clustering photometric (GCph) data
     using the Euclid survey specifications.
@@ -329,7 +368,7 @@ class EuclidLikelihood_GCph(GCphMixin, PhotoLikelihoodBase):
     pass
 
 
-class EuclidLikelihood_GGL(GGLMixin, PhotoLikelihoodBase):
+class EuclidLikelihood_GGL(GGLMixin, _SharedDEPerturbations, PhotoLikelihoodBase):
     """
     EuclidLikelihood_GGL class for galaxy-galaxy lensing likelihood computation.
 
@@ -361,7 +400,9 @@ class EuclidLikelihood_GGL(GGLMixin, PhotoLikelihoodBase):
     pass
 
 
-class EuclidLikelihood_3x2pt(GCphMixin, GGLMixin, WLMixin, PhotoLikelihoodBase):
+class EuclidLikelihood_3x2pt(
+    GCphMixin, GGLMixin, WLMixin, _SharedDEPerturbations, PhotoLikelihoodBase
+):
     """
     EuclidLikelihood_3x2pt combines weak lensing (WL), galaxy clustering (GCph), and galaxy-galaxy lensing (GGL)
     likelihoods for photometric cosmological analyses, supporting scale cuts and masking.
@@ -375,6 +416,8 @@ class EuclidLikelihood_3x2pt(GCphMixin, GGLMixin, WLMixin, PhotoLikelihoodBase):
     Note: The order of inheritance matters due to the method resolution order (MRO) in Python
     and how mixins extend the base class functionality. Also, the order of the mixins assumes
     the ordering of the covariance matrix blocks is GCph, GGL and WL.
+    ``_SharedDEPerturbations`` sits immediately before ``PhotoLikelihoodBase`` so the
+    background and nonlinear spectrum are built once and reused by every probe.
 
     Parameters
     ----------
@@ -395,7 +438,9 @@ class EuclidLikelihood_3x2pt(GCphMixin, GGLMixin, WLMixin, PhotoLikelihoodBase):
     pass
 
 
-class EuclidLikelihood_2x2pt(GCphMixin, GGLMixin, PhotoLikelihoodBase):
+class EuclidLikelihood_2x2pt(
+    GCphMixin, GGLMixin, _SharedDEPerturbations, PhotoLikelihoodBase
+):
     """
     Likelihood class for Euclid 2x2pt photometric clustering and galaxy-galaxy lensing analysis.
 
@@ -405,6 +450,8 @@ class EuclidLikelihood_2x2pt(GCphMixin, GGLMixin, PhotoLikelihoodBase):
     Note: The order of inheritance matters due to the method resolution order (MRO) in Python
     and how mixins extend the base class functionality. Also, the order of the mixins assumes
     the ordering of the covariance matrix blocks is GCph, GGL.
+    ``_SharedDEPerturbations`` sits immediately before ``PhotoLikelihoodBase`` so the
+    background and nonlinear spectrum are built once and reused by both probes.
 
     Parameters
     ----------

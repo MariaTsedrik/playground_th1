@@ -15,7 +15,7 @@ from multiprocessing import get_context
 import time
 from datetime import timedelta
 # MPI parallelization (replaces multiprocessing for HPC clusters)
-#from mpi4py.futures import MPIPoolExecutor
+from mpi4py.futures import MPIPoolExecutor
 import yaml
 import ast
 
@@ -471,7 +471,7 @@ def like_Naut_test(param_dict):
     # uncomment for cmb-priors!!!
     #pars_in['Omega_cdm0'] = param_dict['omch2'] / h**2
     #pars_in['Omega_b0'] = param_dict['ombh2'] / h**2
-    #pars_in['As'] = np.exp(param_dict['logAs']) * 1e-10
+    pars_in['As'] = np.exp(param_dict['logAs']) * 1e-10
     try:
         like = like_instance.loglike(pars_in) 
     except ValueError:
@@ -479,11 +479,11 @@ def like_Naut_test(param_dict):
 
     return (like, like_instance.derived['sigma8_0'][0, 0])
 
-"""
+
 blob_vec     = [('sigma8_0', float)]
 
 parallelisation_option = "MPI"
-sampling_workers = 32
+
 
 if __name__ == '__main__':
     # Initialize Nautilus sampler 
@@ -544,11 +544,10 @@ if __name__ == '__main__':
     )
 
 
-    print(f"{parallelisation_option} with {sampling_workers} processes: sampling complete!")
+    print(f"{parallelisation_option} : sampling complete!")
     print(f"  Evidence: log_Z = {log_z:.6f}")
     print(f"  Total time: {chain_time:.2f} s ({chain_time_hms})")
     print(f"  Output files:")
     print(f"    HDF5: chains/hdf5/{hdf5_name}.hdf5")
     print(f"    Chain: chains/chain_{chain_name}.npz")
 
-"""
