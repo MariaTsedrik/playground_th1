@@ -324,7 +324,6 @@ class EuclidLikelihood_WL_Cls:
             self.zs,
             nuisance_params={key: parameters[key] for key in self.full_she_keys}
             | {"CIA": 0.0134},
-            ia_model='NLA',
         )
 
         

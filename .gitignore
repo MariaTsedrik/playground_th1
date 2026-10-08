@@ -7,6 +7,7 @@ RR2.fits
 tutorials/footprint.fits.gz
 tutorials/rr2_measure.ipynb
 tutorials/th1-kp4/TR1_data/
+tutorials/th1-kp4/scale_cut_data/
 tutorials/th1-kp4/GC_TR1_2ndit/
 tutorials/th1-kp4/leonardo/
 figs

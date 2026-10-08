@@ -51,12 +51,8 @@ class WLMixin:
 
     def get_theory_vector_full(self, parameters):
         v = super().get_theory_vector_full(parameters)
-        background = self.Background(parameters,
-                            w_i = parameters["w_i"],
-                            zbin_edges = parameters["zbin_edges"]
-        )
         background_lcdm = CAMBBackground(
-            H0=background.H0,
+            H0=parameters["H0"],
             Omega_cdm0=parameters["Omega_cdm0"],
             Omega_b0=parameters["Omega_b0"],
             Omega_k0=parameters["Omega_k0"],
@@ -68,6 +64,18 @@ class WLMixin:
             gamma_MG=parameters["gamma_MG"],
             N_mnu=parameters["N_mnu"],
         )
+        background = self.Background(H0=parameters["H0"],
+                            Omega_cdm0=parameters["Omega_cdm0"],
+                            Omega_b0=parameters["Omega_b0"],
+                            Omega_k0=parameters["Omega_k0"],
+                            ns=parameters["ns"],
+                            As=parameters["As"],
+                            mnu=parameters["mnu"],
+                            zbin_edges = parameters["zbin_edges"],
+                            w_i = parameters["w_i"],
+                            binning = parameters["binning"]
+
+        )
         linear_perturbations_lcdm = HMemuLinearPerturbations(background_lcdm, self.zs)
         lp = self.LinPerturbations(background, linear_perturbations_lcdm)
         nlp = self.NonLinPerturbations(
@@ -77,7 +85,6 @@ class WLMixin:
             nlp,
             self.data["dndz_she"],
             self.zs,
-            ia_model='NLA',
             nuisance_params={key: parameters[key] for key in self.full_she_keys},
         )
         if self.mode == "coupled":
@@ -135,12 +142,8 @@ class GCphMixin:
 
     def get_theory_vector_full(self, parameters):
         v = super().get_theory_vector_full(parameters)
-        background = self.Background(parameters,
-                            w_i = parameters["w_i"],
-                            zbin_edges = parameters["zbin_edges"]
-        )
         background_lcdm = CAMBBackground(
-            H0=background.H0,
+            H0=parameters["H0"],
             Omega_cdm0=parameters["Omega_cdm0"],
             Omega_b0=parameters["Omega_b0"],
             Omega_k0=parameters["Omega_k0"],
@@ -151,6 +154,18 @@ class GCphMixin:
             mnu=parameters["mnu"],
             gamma_MG=parameters["gamma_MG"],
             N_mnu=parameters["N_mnu"],
+        )
+        background = self.Background(H0=parameters["H0"],
+                            Omega_cdm0=parameters["Omega_cdm0"],
+                            Omega_b0=parameters["Omega_b0"],
+                            Omega_k0=parameters["Omega_k0"],
+                            ns=parameters["ns"],
+                            As=parameters["As"],
+                            mnu=parameters["mnu"],
+                            zbin_edges = parameters["zbin_edges"],
+                            w_i = parameters["w_i"],
+                            binning = parameters["binning"]
+
         )
         linear_perturbations_lcdm = HMemuLinearPerturbations(background_lcdm, self.zs)
         lp = self.LinPerturbations(background, linear_perturbations_lcdm)
@@ -227,12 +242,8 @@ class GGLMixin:
 
     def get_theory_vector_full(self, parameters):
         v = super().get_theory_vector_full(parameters)
-        background = self.Background(parameters,
-                            w_i = parameters["w_i"],
-                            zbin_edges = parameters["zbin_edges"]
-        )
         background_lcdm = CAMBBackground(
-            H0=background.H0,
+            H0=parameters["H0"],
             Omega_cdm0=parameters["Omega_cdm0"],
             Omega_b0=parameters["Omega_b0"],
             Omega_k0=parameters["Omega_k0"],
@@ -243,6 +254,18 @@ class GGLMixin:
             mnu=parameters["mnu"],
             gamma_MG=parameters["gamma_MG"],
             N_mnu=parameters["N_mnu"],
+        )
+        background = self.Background(H0=parameters["H0"],
+                            Omega_cdm0=parameters["Omega_cdm0"],
+                            Omega_b0=parameters["Omega_b0"],
+                            Omega_k0=parameters["Omega_k0"],
+                            ns=parameters["ns"],
+                            As=parameters["As"],
+                            mnu=parameters["mnu"],
+                            zbin_edges = parameters["zbin_edges"],
+                            w_i = parameters["w_i"],
+                            binning = parameters["binning"]
+
         )
         linear_perturbations_lcdm = HMemuLinearPerturbations(background_lcdm, self.zs)
         lp = self.LinPerturbations(background, linear_perturbations_lcdm)
@@ -260,7 +283,6 @@ class GGLMixin:
             nlp,
             self.data["dndz_she"],
             self.zs,
-            ia_model='NLA',
             nuisance_params={key: parameters[key] for key in self.full_she_keys},
         )
         if self.mode == "coupled":

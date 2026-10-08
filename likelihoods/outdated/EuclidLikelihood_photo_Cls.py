@@ -78,7 +78,6 @@ class WLMixin:
             nlp,
             self.data["dndz_she"],
             self.zs,
-            ia_model='NLA',
             nuisance_params={key: parameters[key] for key in self.full_she_keys},
         )
         if self.mode == "coupled":
@@ -267,7 +266,6 @@ class GGLMixin:
             nlp,
             self.data["dndz_she"],
             self.zs,
-            ia_model='NLA',
             nuisance_params={key: parameters[key] for key in self.full_she_keys},
         )
         if self.mode == "coupled":
